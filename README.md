@@ -20,9 +20,7 @@ Este projeto implementa um simulador de cache em C, que permite a simulação de
 
 Para executar o simulador, utilize a seguinte linha de comando:
 
-```
-cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> <arquivo_de_entrada>
-```
+cache_simulator <nsets.> <bsize.> <assoc.> <substituição> <flag_saida> <arquivo_de_entrada>
 
 ### Parâmetros
 
@@ -37,14 +35,8 @@ cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> <arquivo_d
 
 Para executar o simulador com um arquivo de entrada específico, utilize o seguinte comando:
 
-```
 cache_simulator 256 4 1 R 1 tests/bin_100.bin
-```
 
 ## Relatório de Saída
 
 O simulador gera um relatório de estatísticas que inclui o número total de acessos, hits, misses (classificados em compulsórios, capacidade e conflito) e as taxas correspondentes. O formato da saída depende do valor do parâmetro `<flag_saida>`.
-
-## Contribuições
-
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests para melhorias e correções.

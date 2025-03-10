@@ -4,12 +4,46 @@
 #include "cache.h"
 #include "utils.h"
 
-void print_usage() {
+void print_usage()
+{
     printf("Uso: cache_simulator <nsets> <bsize> <assoc> <substituição> <flag_saida> <arquivo_de_entrada>\n");
 }
 
-int main(int argc, char *argv[]) {
-    if (argc != 7) {
+void process_addresses(FILE *file, Cache *cache)
+{
+    uint32_t address;
+    while (fread(&address, sizeof(uint32_t), 1, file))
+    {
+        access_cache(cache, address, cache->n_sets, cache->bsize, cache->assoc, &cache->replacement_policy);
+    }
+}
+
+void print_statistics(Cache *cache, int flag_saida)
+{
+    if (flag_saida == 0)
+    {
+        printf("Total de acessos: %d\n", cache->total_accesses);
+        printf("Taxa de hits: %.2f\n", (double)cache->hits / cache->total_accesses);
+        printf("Taxa de misses: %.2f\n", (double)cache->misses / cache->total_accesses);
+        printf("Taxa de misses compulsórios: %.2f\n", (double)cache->compulsory_misses / cache->misses);
+        printf("Taxa de misses de capacidade: %.2f\n", (double)cache->capacity_misses / cache->misses);
+        printf("Taxa de misses de conflito: %.2f\n", (double)cache->conflict_misses / cache->misses);
+    }
+    else if (flag_saida == 1)
+    {
+        printf("%d, %.2f, %.2f, %.2f, %.2f, %.2f\n", cache->total_accesses,
+               (double)cache->hits / cache->total_accesses,
+               (double)cache->misses / cache->total_accesses,
+               (double)cache->compulsory_misses / cache->misses,
+               (double)cache->capacity_misses / cache->misses,
+               (double)cache->conflict_misses / cache->misses);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 7)
+    {
         print_usage();
         return EXIT_FAILURE;
     }
@@ -21,20 +55,24 @@ int main(int argc, char *argv[]) {
     int flag_saida = atoi(argv[5]);
     char *arquivo_de_entrada = argv[6];
 
-    if (nsets <= 0 || bsize <= 0 || assoc <= 0 || (strcmp(substituicao, "R") != 0 && strcmp(substituicao, "F") != 0 && strcmp(substituicao, "L") != 0)) {
+    if (nsets <= 0 || bsize <= 0 || assoc <= 0 || (strcmp(substituicao, "R") != 0 && strcmp(substituicao, "F") != 0 && strcmp(substituicao, "L") != 0))
+    {
         print_usage();
         return EXIT_FAILURE;
     }
 
-    Cache *cache = init_cache(nsets, bsize, assoc, substituicao);
-    if (cache == NULL) {
+    Cache *cache = create_cache(nsets, bsize, assoc, *substituicao);
+    if (cache == NULL)
+    {
         fprintf(stderr, "Erro ao inicializar a cache.\n");
         return EXIT_FAILURE;
     }
 
+    printf("Tentando abrir o arquivo: %s\n", arquivo_de_entrada); // Adicionando verificação do caminho do arquivo
     FILE *file = fopen(arquivo_de_entrada, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Erro ao abrir o arquivo de entrada.\n");
+    if (file == NULL)
+    {
+        perror("Erro ao abrir o arquivo de entrada");
         free_cache(cache);
         return EXIT_FAILURE;
     }

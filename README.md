@@ -18,9 +18,23 @@ Este projeto implementa um simulador de cache em C, que permite a simulação de
 
 ## Instruções de Uso
 
+Comece compilando utilizando o makefile ou compilando invividualmente com o seguinte codigo:
+gcc -Iinclude -Wall -Wextra -g -c src/main.c -o src/main.o
+gcc -Iinclude -Wall -Wextra -g -c src/cache.c -o src/cache.o
+gcc -Iinclude -Wall -Wextra -g -c src/utils.c -o src/utils.o
+
+Se a compilação for bem sucedida, linke-os para criar o executável:
+
+gcc -o cache_simulator src/main.o src/cache.o src/utils.o -lm
+
+Se o executável cache_simulator for criado com sucesso, execute-o com os parâmetros desejados, abaixo estará um
+exemplo de linha de comando:
+
+./cache_simulator 256 4 1 R 1 tests/bin_100.bin
+
 Para executar o simulador, utilize a seguinte linha de comando:
 
-cache_simulator <nsets.> <bsize.> <assoc.> <substituição> <flag_saida> <arquivo_de_entrada>
+./cache_simulator <nsets.> <bsize.> <assoc.> <substituição> <flag_saida> <arquivo_de_entrada>
 
 ### Parâmetros
 

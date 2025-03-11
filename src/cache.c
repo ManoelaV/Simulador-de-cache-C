@@ -39,21 +39,21 @@ void free_cache(Cache *cache)
     free(cache);
 }
 
-void access_cache(Cache *cache, uint32_t address, int nsets, int bsize, int assoc, const char *replacement_policy)
+void access_cache(Cache *cache, uint32_t address)
 {
-    int n_bits_offset = log2(bsize);
-    int n_bits_index = log2(nsets);
+    int n_bits_offset = log2(cache->bsize);
+    int n_bits_index = log2(cache->n_sets);
     uint32_t tag = address >> (n_bits_offset + n_bits_index);
     int index = (address >> n_bits_offset) & ((1 << n_bits_index) - 1);
 
     int hit = 0;
-    for (int i = 0; i < assoc; i++)
+    for (int i = 0; i < cache->assoc; i++)
     {
-        if (cache->lines[index * assoc + i].valid && cache->lines[index * assoc + i].tag == tag)
+        if (cache->lines[index * cache->assoc + i].valid && cache->lines[index * cache->assoc + i].tag == tag)
         {
             hit = 1;
             cache->hits++;
-            cache->lines[index * assoc + i].last_access = cache->total_accesses;
+            cache->lines[index * cache->assoc + i].last_access = cache->total_accesses;
             break;
         }
     }
@@ -67,9 +67,9 @@ void access_cache(Cache *cache, uint32_t address, int nsets, int bsize, int asso
 
     cache->misses++;
     int empty_slot = -1;
-    for (int i = 0; i < assoc; i++)
+    for (int i = 0; i < cache->assoc; i++)
     {
-        if (cache->lines[index * assoc + i].valid == 0)
+        if (cache->lines[index * cache->assoc + i].valid == 0)
         {
             empty_slot = i;
             break;
@@ -79,46 +79,55 @@ void access_cache(Cache *cache, uint32_t address, int nsets, int bsize, int asso
     if (empty_slot != -1)
     {
         cache->compulsory_misses++;
-        cache->lines[index * assoc + empty_slot].valid = 1;
-        cache->lines[index * assoc + empty_slot].tag = tag;
-        cache->lines[index * assoc + empty_slot].last_access = cache->total_accesses;
+        cache->lines[index * cache->assoc + empty_slot].valid = 1;
+        cache->lines[index * cache->assoc + empty_slot].tag = tag;
+        cache->lines[index * cache->assoc + empty_slot].last_access = cache->total_accesses;
     }
     else
     {
-        // Implement replacement policy
-        if (strcmp(replacement_policy, "R") == 0)
+        if (cache->total_accesses <= cache->n_sets * cache->assoc)
         {
-            // Random replacement
-            int replace_index = rand() % assoc;
-            cache->lines[index * assoc + replace_index].tag = tag;
-            cache->lines[index * assoc + replace_index].last_access = cache->total_accesses;
-            cache->conflict_misses++;
+            cache->compulsory_misses++;
         }
-        else if (strcmp(replacement_policy, "F") == 0)
+        else
         {
-            // FIFO replacement
-            int replace_index = cache->fifo_counters[index];
-            cache->lines[index * assoc + replace_index].tag = tag;
-            cache->lines[index * assoc + replace_index].last_access = cache->total_accesses;
-            cache->fifo_counters[index] = (cache->fifo_counters[index] + 1) % assoc;
-            cache->conflict_misses++;
-        }
-        else if (strcmp(replacement_policy, "L") == 0)
-        {
-            // LRU replacement
-            int lru_index = 0;
-            int lru_time = cache->lines[index * assoc].last_access;
-            for (int i = 1; i < assoc; i++)
+            if (cache->n_sets == 1)
             {
-                if (cache->lines[index * assoc + i].last_access < lru_time)
+                cache->capacity_misses++;
+            }
+            else
+            {
+                cache->conflict_misses++;
+            }
+        }
+
+        if (cache->replacement_policy == 'R') // Comparação com 'R' (char)
+        {
+            int replace_index = rand() % cache->assoc;
+            cache->lines[index * cache->assoc + replace_index].tag = tag;
+            cache->lines[index * cache->assoc + replace_index].last_access = cache->total_accesses;
+        }
+        else if (cache->replacement_policy == 'F') // Comparação com 'F' (char)
+        {
+            int replace_index = cache->fifo_counters[index];
+            cache->lines[index * cache->assoc + replace_index].tag = tag;
+            cache->lines[index * cache->assoc + replace_index].last_access = cache->total_accesses;
+            cache->fifo_counters[index] = (cache->fifo_counters[index] + 1) % cache->assoc;
+        }
+        else if (cache->replacement_policy == 'L') // Comparação com 'L' (char)
+        {
+            int lru_index = 0;
+            int lru_time = cache->lines[index * cache->assoc].last_access;
+            for (int i = 1; i < cache->assoc; i++)
+            {
+                if (cache->lines[index * cache->assoc + i].last_access < lru_time)
                 {
                     lru_index = i;
-                    lru_time = cache->lines[index * assoc + i].last_access;
+                    lru_time = cache->lines[index * cache->assoc + i].last_access;
                 }
             }
-            cache->lines[index * assoc + lru_index].tag = tag;
-            cache->lines[index * assoc + lru_index].last_access = cache->total_accesses;
-            cache->conflict_misses++;
+            cache->lines[index * cache->assoc + lru_index].tag = tag;
+            cache->lines[index * cache->assoc + lru_index].last_access = cache->total_accesses;
         }
     }
 }

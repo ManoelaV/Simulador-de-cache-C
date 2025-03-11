@@ -29,7 +29,7 @@ typedef struct
 
 // Funções para manipulação da cache
 Cache *create_cache(int n_sets, int bsize, int assoc, char replacement_policy);
-void access_cache(Cache *cache, uint32_t address, int nsets, int bsize, int assoc, const char *replacement_policy);
+void access_cache(Cache *cache, uint32_t address);
 void free_cache(Cache *cache);
 void print_cache_stats(Cache *cache, int total_accesses, int flag_saida);
 

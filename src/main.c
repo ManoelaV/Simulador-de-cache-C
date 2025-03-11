@@ -12,9 +12,12 @@ void print_usage()
 void process_addresses(FILE *file, Cache *cache)
 {
     uint32_t address;
-    while (fread(&address, sizeof(uint32_t), 1, file))
+    uint8_t buffer[4];
+    while (fread(buffer, sizeof(uint8_t), 4, file) == 4)
     {
-        access_cache(cache, address, cache->n_sets, cache->bsize, cache->assoc, &cache->replacement_policy);
+        // Converte de big-endian para little-endian
+        address = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+        access_cache(cache, address);
     }
 }
 
@@ -61,7 +64,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    Cache *cache = create_cache(nsets, bsize, assoc, *substituicao);
+    Cache *cache = create_cache(nsets, bsize, assoc, substituicao[0]);
+    ;
     if (cache == NULL)
     {
         fprintf(stderr, "Erro ao inicializar a cache.\n");
